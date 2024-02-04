@@ -1,4 +1,4 @@
-module github.com/Lanworm/OTUS_GO/tree/master/hw01_hello_otus
+module github.com/Lanworm/OTUS_GO/hw01_hello_otus
 
 go 1.19
 
