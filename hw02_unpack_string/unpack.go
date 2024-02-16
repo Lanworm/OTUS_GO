@@ -13,14 +13,13 @@ func Unpack(str string) (string, error) {
 	var err error = nil
 	var idx = 0
 	for i, v := range str {
-		//Проверяем является ли элемент числом
 		count, e := strconv.Atoi(string(str[i]))
-		if e == nil && i == 0 { // Число стоит первым? Ошибка!
+		if e == nil && i == 0 {
 			err = ErrInvalidString
 			break
-		} else if e == nil && i > 0 { //Число не стоит первым? ок
-			_, e2 := strconv.Atoi(string(str[i-1])) //А что стоит перед ним?
-			if e == nil && e2 == nil {              // Два числа подряд? Ошибка!
+		} else if e == nil && i > 0 {
+			_, e2 := strconv.Atoi(string(str[i-1]))
+			if e == nil && e2 == nil {
 				err = ErrInvalidString
 				break
 			}
@@ -30,7 +29,7 @@ func Unpack(str string) (string, error) {
 				builder.WriteString(strings.Repeat(string(str[i-1]), count-1))
 			}
 			if count == 0 {
-				idx++ // Фиксируем отклонение индекса
+				idx++
 				result := builder.String()
 				result = result[:i-idx]
 				builder.Reset()
