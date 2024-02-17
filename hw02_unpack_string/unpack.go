@@ -10,7 +10,7 @@ var ErrInvalidString = errors.New("invalid string")
 
 func Unpack(str string) (string, error) {
 	builder := strings.Builder{}
-	var err error = nil
+	var err error
 	var idx = 0
 	for i, v := range str {
 		count, e := strconv.Atoi(string(str[i]))
