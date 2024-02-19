@@ -1,0 +1,4 @@
+go 1.19
+
+use ./hw02_unpack_string
+use ./hw01_hello_otus
