@@ -49,8 +49,29 @@ func TestCache(t *testing.T) {
 		require.Nil(t, val)
 	})
 
-	t.Run("purge logic", func(t *testing.T) {
-		// Write me
+	t.Run("push first", func(t *testing.T) {
+		// на логику выталкивания элементов из-за размера очереди
+		c := NewCache(3)
+		for i := 0; i < 4; i++ {
+			c.Set(Key(strconv.Itoa(i)), 100)
+		}
+		val, ok := c.Get("0")
+		require.False(t, ok)
+		require.Nil(t, val)
+	})
+	t.Run("push last used", func(t *testing.T) {
+		// на логику выталкивания давно используемых элементов
+		c := NewCache(4)
+		for i := 0; i < 4; i++ {
+			c.Set(Key(strconv.Itoa(i)), 100)
+		}
+		c.Set("1", 300)
+		val, _ := c.Get("2")
+		c.Set("3", val)
+		c.Set("4", 500)
+		val, ok := c.Get("0")
+		require.False(t, ok)
+		require.Nil(t, val)
 	})
 }
 
