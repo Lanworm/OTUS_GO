@@ -3,77 +3,47 @@ package hw05parallelexecution
 import (
 	"errors"
 	"sync"
+	"sync/atomic"
 )
 
 var ErrErrorsLimitExceeded = errors.New("errors limit exceeded")
 
 type Task func() error
 
-func runTask(t Task, errorCh chan<- struct{}, successCh chan<- struct{}, wg *sync.WaitGroup) {
-	defer wg.Done()
-	err := t()
-	if err != nil {
-		errorCh <- struct{}{}
-	} else {
-		successCh <- struct{}{}
-	}
-}
-
-func taskLimiter(tasks []Task, done chan<- error, wg *sync.WaitGroup, maxErrorCount int, maxGoCount int) {
-	errorCh := make(chan struct{}, maxGoCount*2)
-	successCh := make(chan struct{}, maxGoCount*2)
-	var taskWg sync.WaitGroup
-	defer func() {
-		taskWg.Wait()
-		close(errorCh)
-		close(successCh)
-		wg.Done()
-	}()
-	nbTask := 0
-	successCount := 0
-	errorCount := 0
-	taskSize := len(tasks)
-	for i := 0; i < maxGoCount && i < taskSize; i++ {
-		taskWg.Add(1)
-		go runTask(tasks[nbTask], errorCh, successCh, &taskWg)
-		nbTask++
-	}
+func worker(ch chan Task, errorCount *int64, wg *sync.WaitGroup) {
 	for {
-		select {
-		case <-errorCh:
-			errorCount++
-		case <-successCh:
-			successCount++
+		t, ok := <-ch
+		if !ok {
+			break
 		}
-
-		if errorCount == maxErrorCount {
-			done <- ErrErrorsLimitExceeded
-			return
+		wg.Add(1)
+		err := t()
+		if err != nil {
+			atomic.AddInt64(errorCount, 1)
 		}
-
-		if errorCount+successCount == taskSize {
-			done <- nil
-			return
-		}
-
-		if nbTask < taskSize {
-			taskWg.Add(1)
-			go runTask(tasks[nbTask], errorCh, successCh, &taskWg)
-			nbTask++
-		}
+		wg.Done()
 	}
 }
 
 // Run starts tasks in n goroutines and stops its work when receiving m errors from tasks.
 func Run(tasks []Task, n, m int) error {
-	var wg sync.WaitGroup
-	wg.Add(1)
-	resultChan := make(chan error)
-	defer func() {
-		close(resultChan)
-	}()
-	go taskLimiter(tasks, resultChan, &wg, m, n)
-	x := <-resultChan
+	wg := sync.WaitGroup{}
+	var result error
+	var errorCount int64
+	tasksCh := make(chan Task)
+	defer close(tasksCh)
+	for i := 0; i < n; i++ {
+		go worker(tasksCh, &errorCount, &wg)
+
+	}
+	for _, t := range tasks {
+		if int(errorCount) != 0 && int(errorCount) == m {
+			return ErrErrorsLimitExceeded
+		} else {
+			result = nil
+		}
+		tasksCh <- t
+	}
 	wg.Wait()
-	return x
+	return result
 }
