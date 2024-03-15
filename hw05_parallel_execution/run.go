@@ -11,7 +11,6 @@ var ErrErrorsLimitExceeded = errors.New("errors limit exceeded")
 type Task func() error
 
 func worker(ch chan Task, errorCount *int64, wg *sync.WaitGroup) {
-	wg.Add(1)
 	for t := range ch {
 		err := t()
 		if err != nil {
@@ -29,16 +28,17 @@ func Run(tasks []Task, n, m int) error {
 	tasksCh := make(chan Task)
 	// defer close(tasksCh)
 	for i := 0; i < n; i++ {
+		wg.Add(1)
 		go worker(tasksCh, &errorCount, &wg)
 	}
 	for _, t := range tasks {
-		if int(errorCount) != 0 && int(errorCount) == m {
+		if int(atomic.LoadInt64(&errorCount)) != 0 && int(atomic.LoadInt64(&errorCount)) == m {
 			result = ErrErrorsLimitExceeded
-			close(tasksCh)
 			break
 		}
 		tasksCh <- t
 	}
+	close(tasksCh)
 	wg.Wait()
 	return result
 }
