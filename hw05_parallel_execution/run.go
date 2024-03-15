@@ -27,7 +27,7 @@ func Run(tasks []Task, n, m int) error {
 	var result error
 	var errorCount int64
 	tasksCh := make(chan Task)
-	//defer close(tasksCh)
+	// defer close(tasksCh)
 	for i := 0; i < n; i++ {
 		go worker(tasksCh, &errorCount, &wg)
 	}
