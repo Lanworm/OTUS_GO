@@ -8,7 +8,7 @@ type (
 
 type Stage func(in In) (out Out)
 
-func exec(done In, intStream In, stage Stage) {
+func exec(done In, intStream In, stage Stage) Out {
 	resultStream := make(Bi)
 	go func() {
 		defer close(resultStream)
@@ -21,12 +21,13 @@ func exec(done In, intStream In, stage Stage) {
 		}
 	}()
 	intStream = resultStream
+	return resultStream
 }
 
 func ExecutePipeline(in In, done In, stages ...Stage) Out {
 	out := stages[0](in)
 	for _, s := range stages {
-		exec(done, out, s)
+		out = exec(done, out, s)
 	}
 	return out
 }
