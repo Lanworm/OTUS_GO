@@ -26,9 +26,9 @@ func exec(in In, done In) Out {
 
 func ExecutePipeline(in In, done In, stages ...Stage) Out {
 	out := make(In)
+	out = in
 	for _, s := range stages {
-		out = exec(in, done)
-		in = s(out)
+		out = exec(s(out), done)
 	}
 	return out
 }
