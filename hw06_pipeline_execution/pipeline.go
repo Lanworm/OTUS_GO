@@ -16,11 +16,11 @@ func exec(in In, done In) Out {
 			select {
 			case <-done:
 				return
-			case data, ok := <-in:
+			case v, ok := <-in:
 				if !ok {
 					return
 				}
-				out <- data
+				out <- v
 			}
 		}
 	}()
