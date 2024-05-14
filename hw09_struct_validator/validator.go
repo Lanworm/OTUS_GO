@@ -1,17 +1,31 @@
 package hw09structvalidator
 
-type ValidationError struct {
-	Field string
-	Err   error
-}
-
-type ValidationErrors []ValidationError
-
-func (v ValidationErrors) Error() string {
-	panic("implement me")
-}
+import (
+	"reflect"
+)
 
 func Validate(v interface{}) error {
-	// Place your code here.
+	errValid := ValidationErrors{}
+	valStruct := reflect.ValueOf(v)
+
+	if valStruct.Kind() != reflect.Struct {
+		return ErrNotStructProvided
+	}
+
+	typeStruct := valStruct.Type()
+	for i := 0; i < typeStruct.NumField(); i++ {
+		fv := FieldValidator{
+			field: typeStruct.Field(i),
+			value: valStruct.Field(i),
+		}
+
+		errors := fv.validate()
+		errValid = append(errValid, errors...)
+	}
+
+	if len(errValid) != 0 {
+		return errValid
+	}
+
 	return nil
 }
