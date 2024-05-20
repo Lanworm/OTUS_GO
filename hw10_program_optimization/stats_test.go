@@ -1,3 +1,4 @@
+//go:build !bench
 // +build !bench
 
 package hw10programoptimization
@@ -36,4 +37,44 @@ func TestGetDomainStat(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, DomainStat{}, result)
 	})
+}
+
+func TestInvalidData(t *testing.T) {
+	tests := []struct {
+		descr         string
+		data          string
+		expectedError bool
+		expectedValue DomainStat
+	}{
+		{
+			descr:         "invalid json - no field name",
+			data:          `{"Id":2,:"Jesse Vasquez","Username":"qRichardson","Email":"mLynch@broWsecat.com","Phone":"9-373-949-64-00","Password":"SiZLeNSGn","Address":"Fulton Hill 80"}`,
+			expectedError: true,
+			expectedValue: nil,
+		},
+		{
+			descr:         "invalid email - no @",
+			data:          `{"Id":2,"Name":"Jesse Vasquez","Username":"qRichardson","Email":"mLynchbroWsecat.com","Phone":"9-373-949-64-00","Password":"SiZLeNSGn","Address":"Fulton Hill 80"}`,
+			expectedError: false,
+			expectedValue: make(DomainStat),
+		},
+		{
+			descr:         "invalid email - no prefix ",
+			data:          `{"Id":2,"Name":"Jesse Vasquez","Username":"qRichardson","Email":"mLynch@broWsecat","Phone":"9-373-949-64-00","Password":"SiZLeNSGn","Address":"Fulton Hill 80"}`,
+			expectedError: false,
+			expectedValue: make(DomainStat),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.descr, func(t *testing.T) {
+			got, err := GetDomainStat(bytes.NewBufferString(tt.data), "com")
+			if tt.expectedError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.expectedValue, got)
+			}
+		})
+	}
 }
