@@ -1,9 +1,10 @@
 package memorystorage
 
 import (
+	"sync"
+
 	"github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/storage"
 	"github.com/google/uuid"
-	"sync"
 )
 
 type Storage struct {
