@@ -2,8 +2,11 @@ package logger
 
 import (
 	"bytes"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestLoggerDebug(t *testing.T) {

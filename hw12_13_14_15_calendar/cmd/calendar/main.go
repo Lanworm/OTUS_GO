@@ -3,6 +3,11 @@ package main
 import (
 	"context"
 	"flag"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
 	"github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/app"
 	"github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/config"
 	"github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/logger"
@@ -13,10 +18,6 @@ import (
 	memorystorage "github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/storage/memory"
 	sqlstorage "github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/storage/sql"
 	"github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/pkg/shortcuts"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
 )
 
 var configFile string

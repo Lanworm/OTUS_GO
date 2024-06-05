@@ -2,11 +2,12 @@ package config
 
 import (
 	"fmt"
-	"github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/validation"
-	"gopkg.in/yaml.v3"
 	"log"
 	"os"
 	"time"
+
+	"github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/validation"
+	"gopkg.in/yaml.v3"
 )
 
 type Config struct {
