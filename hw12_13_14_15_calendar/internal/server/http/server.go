@@ -2,9 +2,20 @@ package internalhttp
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/config"
+	"net"
+	"net/http"
+	"strconv"
 )
 
-type Server struct { // TODO
+type Server struct {
+	logger Logger
+	app    Application
+	conf   config.ServerConf
+	srv    *http.Server
+	mux    *http.ServeMux
 }
 
 type Logger interface { // TODO
@@ -13,19 +24,52 @@ type Logger interface { // TODO
 type Application interface { // TODO
 }
 
-func NewServer(logger Logger, app Application) *Server {
-	return &Server{}
+func NewServer(
+	logger Logger,
+	app Application,
+	conf config.ServerConf,
+) *Server {
+	if conf.Protocol == "" {
+		conf.Protocol = "tcp4"
+	}
+
+	return &Server{
+		logger: logger,
+		app:    app,
+		conf:   conf,
+		mux:    http.NewServeMux(),
+	}
 }
 
-func (s *Server) Start(ctx context.Context) error {
-	// TODO
-	<-ctx.Done()
+func (s *Server) Start(_ context.Context) error {
+	if s.srv != nil {
+		return errors.New("server already started")
+	}
+
+	address := net.JoinHostPort(s.conf.Host, strconv.Itoa(s.conf.Port))
+	s.srv = &http.Server{
+		Addr:              address,
+		Handler:           loggingMiddleware(s.mux),
+		TLSConfig:         nil,
+		ReadTimeout:       s.conf.Timeout,
+		ReadHeaderTimeout: s.conf.Timeout,
+		WriteTimeout:      s.conf.Timeout,
+		IdleTimeout:       s.conf.Timeout,
+		MaxHeaderBytes:    1 << 10,
+	}
+
+	err := s.srv.ListenAndServe()
+	if err != nil {
+		return fmt.Errorf("listen and serve: %w", err)
+	}
+
 	return nil
 }
 
-func (s *Server) Stop(ctx context.Context) error {
-	// TODO
-	return nil
+func (s *Server) Stop(_ context.Context) error {
+	return s.srv.Close()
 }
 
-// TODO
+func (s *Server) AddRoute(route string, handlerFunc http.HandlerFunc) {
+	s.mux.HandleFunc(route, handlerFunc)
+}

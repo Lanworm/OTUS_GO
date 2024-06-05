@@ -1,0 +1,14 @@
+server:
+  host: localhost
+  port: 8080
+  timeout: 3s
+logger:
+  level: DEBUG
+storage:
+  place: memory
+database:
+  user: postgres
+  password: postgres
+  database: postgres
+  host: localhost
+  port: 5432
