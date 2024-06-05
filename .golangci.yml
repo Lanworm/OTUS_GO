@@ -8,6 +8,24 @@ linters-settings:
   funlen:
     lines: 150
     statements: 80
+  depguard:
+    rules:
+      main:
+        files:
+          - $all
+          - "!$test"
+        allow:
+          - $gostd
+          - golang.org/x/exp
+          - github.com/ozgio/strutil
+          - go.uber.org/goleak
+          - github.com/Lanworm/OTUS_GO
+          - github.com/json-iterator/go
+          - github.com/spf13/cobra
+          - github.com/jackc/pgx/v5/pgxpool
+          - github.com/go-playground/validator/v10
+          - gopkg.in/yaml.v3
+          - github.com/google/uuid
 
 issues:
   exclude-rules:
@@ -17,6 +35,7 @@ issues:
         - dupl
         - gocyclo
         - gosec
+        - lll
 
 linters:
   disable-all: true
