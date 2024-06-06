@@ -13,7 +13,7 @@ import (
 	"github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/logger"
 	internalhttp "github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/server/http"
 	"github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/pkg/shortcuts"
-	"github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/pkg/storageConf"
+	"github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/pkg/storageconf"
 )
 
 var configFile string
