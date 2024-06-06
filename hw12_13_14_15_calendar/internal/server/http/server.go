@@ -4,12 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	httpserver "github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/server"
 	"net"
 	"net/http"
 	"strconv"
 
 	"github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/config"
+	httpserver "github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/server"
 )
 
 type Server struct {
