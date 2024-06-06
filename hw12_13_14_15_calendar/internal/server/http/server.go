@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	httpserver "github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/server"
 	"net"
 	"net/http"
 	"strconv"
@@ -59,6 +60,8 @@ func (s *Server) Start(_ context.Context) error {
 		MaxHeaderBytes:    1 << 10,
 	}
 
+	registerRoutes(s)
+
 	err := s.srv.ListenAndServe()
 	if err != nil {
 		return fmt.Errorf("listen and serve: %w", err)
@@ -73,4 +76,9 @@ func (s *Server) Stop(_ context.Context) error {
 
 func (s *Server) AddRoute(route string, handlerFunc http.HandlerFunc) {
 	s.mux.HandleFunc(route, handlerFunc)
+}
+
+func registerRoutes(s *Server) {
+	handler := new(httpserver.Handler)
+	s.AddRoute("/hello", handler.Hello)
 }
