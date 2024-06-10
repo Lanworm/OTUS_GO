@@ -9,5 +9,5 @@ type Event struct {
 	EndDatetime   time.Time `db:"end_datetime"`
 	Description   string    `db:"description"`
 	UserID        string    `db:"user_id"`
-	RemindBefore  int       `db:"remind_before"`
+	RemindBefore  int64     `db:"remind_before"`
 }

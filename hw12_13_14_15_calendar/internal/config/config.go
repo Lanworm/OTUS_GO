@@ -3,7 +3,9 @@ package config
 import (
 	"fmt"
 	"log"
+	"net"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/validation"
@@ -18,10 +20,34 @@ type Config struct {
 }
 
 type ServerConf struct {
+	HTTP ServerHTTPConf
+	GRPC ServerGRPCConf
+}
+
+type ServerHTTPConf struct {
 	Host     string `validate:"required"`
 	Port     int    `validate:"required"`
 	Protocol string
 	Timeout  time.Duration
+}
+
+func (s *ServerHTTPConf) GetFullAddress() string {
+	address := net.JoinHostPort(s.Host, strconv.Itoa(s.Port))
+
+	return address
+}
+
+type ServerGRPCConf struct {
+	Host     string `validate:"required"`
+	Port     int    `validate:"required"`
+	Protocol string
+	Timeout  time.Duration
+}
+
+func (s *ServerGRPCConf) GetFullAddress() string {
+	address := net.JoinHostPort(s.Host, strconv.Itoa(s.Port))
+
+	return address
 }
 
 type StorageConf struct {

@@ -83,3 +83,7 @@ func (l *Logger) Error(msg interface{}) {
 
 	fmt.Fprint(l.out, "ERROR ", msg, "\n")
 }
+
+func (l *Logger) ServerLog(msg interface{}) {
+	fmt.Fprint(l.out, msg, "\n")
+}
