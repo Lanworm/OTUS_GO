@@ -8,16 +8,18 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/app"
-	"github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/logger"
-	internalhttp "github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/server/http"
-	memorystorage "github.com/fixme_my_friend/hw12_13_14_15_calendar/internal/storage/memory"
+	"github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/app"
+	"github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/config"
+	"github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/logger"
+	internalhttp "github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/server/http"
+	"github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/pkg/shortcuts"
+	"github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/pkg/storageconf"
 )
 
 var configFile string
 
 func init() {
-	flag.StringVar(&configFile, "config", "/etc/calendar/config.toml", "Path to configuration file")
+	flag.StringVar(&configFile, "config", "./build/local/config.yaml", "Path to configuration file")
 }
 
 func main() {
@@ -28,13 +30,19 @@ func main() {
 		return
 	}
 
-	config := NewConfig()
-	logg := logger.New(config.Logger.Level)
+	ctx := context.Background()
 
-	storage := memorystorage.New()
-	calendar := app.New(logg, storage)
+	config, err := config.NewConfig(configFile)
+	shortcuts.FatalIfErr(err)
 
-	server := internalhttp.NewServer(logg, calendar)
+	logg, err := logger.New(config.Logger.Level, os.Stdout)
+	shortcuts.FatalIfErr(err)
+
+	eventStorage, _ := storageconf.NewStorage(ctx, *config, logg)
+
+	calendar := app.New(logg, eventStorage)
+
+	server := internalhttp.NewServer(logg, calendar, config.Server)
 
 	ctx, cancel := signal.NotifyContext(context.Background(),
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
