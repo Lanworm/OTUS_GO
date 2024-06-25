@@ -1,0 +1,7 @@
+server:
+  http:
+    host: localhost
+    port: 8090
+    timeout: 3s
+logger:
+  level: DEBUG
