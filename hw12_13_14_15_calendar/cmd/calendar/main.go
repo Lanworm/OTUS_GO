@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -11,7 +12,11 @@ import (
 	"github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/app"
 	"github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/config"
 	"github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/logger"
+	internalgrpc "github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/server/grpc"
+	"github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/server/grpc/grpchandler"
 	internalhttp "github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/server/http"
+	"github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/server/http/httphandler"
+	"github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/service"
 	"github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/pkg/shortcuts"
 	"github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/pkg/storageconf"
 )
@@ -40,30 +45,53 @@ func main() {
 
 	eventStorage, _ := storageconf.NewStorage(ctx, *config, logg)
 
-	calendar := app.New(logg, eventStorage)
-
-	server := internalhttp.NewServer(logg, calendar, config.Server)
+	_ = app.New(logg, eventStorage)
 
 	ctx, cancel := signal.NotifyContext(context.Background(),
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 	defer cancel()
 
+	httpServer := internalhttp.NewHTTPServer(logg, config.Server.HTTP)
+	evtService := service.NewEventService(logg, eventStorage)
+
+	handlerHTTP := httphandler.NewHandler(logg, evtService)
+	httpServer.RegisterRoutes(handlerHTTP)
 	go func() {
-		<-ctx.Done()
-
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
-		defer cancel()
-
-		if err := server.Stop(ctx); err != nil {
-			logg.Error("failed to stop http server: " + err.Error())
+		logg.ServerLog(fmt.Sprintf("http server started on: %s", config.Server.HTTP.GetFullAddress()))
+		if err := httpServer.Start(ctx); err != nil {
+			logg.Error("failed to start http server: " + err.Error())
+			cancel()
+			return
 		}
 	}()
 
-	logg.Info("calendar is running...")
+	handlerGrpc := grpchandler.NewHandler(logg, evtService)
+	grpcServer := internalgrpc.NewRPCServer(
+		handlerGrpc,
+		logg,
+		config.Server.GRPC,
+	)
+	go func() {
+		logg.ServerLog(fmt.Sprintf("grpc server started on: %s", config.Server.GRPC.GetFullAddress()))
+		if err := grpcServer.Start(ctx); err != nil {
+			logg.Error("failed to start grpc server: " + err.Error())
+			cancel()
+			return
+		}
+	}()
 
-	if err := server.Start(ctx); err != nil {
-		logg.Error("failed to start http server: " + err.Error())
-		cancel()
-		os.Exit(1) //nolint:gocritic
+	logg.ServerLog("calendar is running...")
+
+	<-ctx.Done()
+
+	timeOutCtx, timeCancel := context.WithTimeout(context.Background(), time.Second*3)
+	defer timeCancel()
+
+	if err := httpServer.Stop(timeOutCtx); err != nil {
+		logg.Error("failed to stop http server: " + err.Error())
+	}
+
+	if err := grpcServer.Stop(timeOutCtx); err != nil {
+		logg.Error("failed to stop grpc server: " + err.Error())
 	}
 }

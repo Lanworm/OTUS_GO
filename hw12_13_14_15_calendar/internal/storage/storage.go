@@ -1,9 +1,13 @@
 package storage
 
+import (
+	"time"
+)
+
 type IStorage interface {
-	Add(item Event) (string, error)
-	Update(id string, item Event) error
+	Add(item *Event) (string, error)
+	Update(item *Event) error
 	Delete(id string) error
-	FindItem(id string) (Event, error)
-	List() ([]Event, error)
+	FindItem(id string) (*Event, error)
+	ListRange(start, end *time.Time) ([]Event, error)
 }

@@ -2,6 +2,7 @@ package memorystorage
 
 import (
 	"sync"
+	"time"
 
 	"github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/storage"
 	"github.com/google/uuid"
@@ -19,22 +20,37 @@ func New() *Storage {
 	}
 }
 
-func (s *Storage) Add(item storage.Event) (string, error) {
+func (s *Storage) Add(item *storage.Event) (string, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	id := uuid.New().String()
 
-	s.data[id] = item
+	item.StartDatetime = item.StartDatetime.UTC()
+	item.EndDatetime = item.EndDatetime.UTC()
+
+	item.ID = id
+	s.data[id] = *item
 
 	return id, nil
 }
 
-func (s *Storage) Update(id string, item storage.Event) error {
+func (s *Storage) Update(item *storage.Event) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	s.data[id] = item
+	innerItem, ok := s.data[item.ID]
+	if !ok {
+		return storage.ErrEventNotFound
+	}
+
+	innerItem.Title = item.Title
+	innerItem.Description = item.Description
+	innerItem.StartDatetime = item.StartDatetime
+	innerItem.EndDatetime = item.EndDatetime
+	innerItem.RemindBefore = item.RemindBefore
+
+	s.data[item.ID] = innerItem
 
 	return nil
 }
@@ -53,28 +69,29 @@ func (s *Storage) Delete(id string) error {
 	return nil
 }
 
-func (s *Storage) FindItem(id string) (storage.Event, error) {
+func (s *Storage) FindItem(id string) (*storage.Event, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	var item storage.Event
-
 	item, ok := s.data[id]
-	if ok {
-		return item, storage.ErrEventNotFound
+	if !ok {
+		return nil, storage.ErrEventNotFound
 	}
 
-	return item, nil
+	return &item, nil
 }
 
-func (s *Storage) List() ([]storage.Event, error) {
+func (s *Storage) ListRange(start, end *time.Time) ([]storage.Event, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
 	result := make([]storage.Event, 0, len(s.data))
 
 	for _, item := range s.data {
-		result = append(result, item)
+		if (item.StartDatetime.Equal(*start) || item.StartDatetime.After(*start)) &&
+			(item.StartDatetime.Equal(*end) || item.StartDatetime.Before(*end)) {
+			result = append(result, item)
+		}
 	}
 
 	return result, nil
