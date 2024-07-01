@@ -1,7 +1,7 @@
-package http
+package server
 
 import (
-	"github.com/Lanworm/OTUS_GO/final_project/internal/server/http/httphandler"
+	"github.com/Lanworm/OTUS_GO/final_project/internal/http/server/httphandler"
 )
 
 const baseContentType = "application/json"

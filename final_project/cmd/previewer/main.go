@@ -4,15 +4,15 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/Lanworm/OTUS_GO/final_project/internal/logger"
-	"github.com/Lanworm/OTUS_GO/final_project/internal/server/http"
-	"github.com/Lanworm/OTUS_GO/final_project/internal/server/http/httphandler"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
 	"github.com/Lanworm/OTUS_GO/final_project/internal/config"
+	"github.com/Lanworm/OTUS_GO/final_project/internal/http/server"
+	"github.com/Lanworm/OTUS_GO/final_project/internal/http/server/httphandler"
+	"github.com/Lanworm/OTUS_GO/final_project/internal/logger"
 	"github.com/Lanworm/OTUS_GO/final_project/pkg/shortcuts"
 )
 
@@ -39,7 +39,7 @@ func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(),
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 	defer cancel()
-	httpServer := http.NewHTTPServer(logg, configs.Server.HTTP)
+	httpServer := server.NewHTTPServer(logg, configs.Server.HTTP)
 	handlerHTTP := httphandler.NewHandler(logg)
 	httpServer.RegisterRoutes(handlerHTTP)
 	go func() {
