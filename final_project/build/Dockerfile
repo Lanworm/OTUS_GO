@@ -16,7 +16,7 @@ COPY . ${CODE_DIR}
 # Собираем статический бинарник Go (без зависимостей на Си API),
 # иначе он не будет работать в alpine образе.
 ARG LDFLAGS
-RUN  go build \
+RUN CGO_ENABLED=0 go build \
         -ldflags "$LDFLAGS" \
         -o ${BIN_FILE} cmd/previewer/*
 
@@ -29,9 +29,7 @@ LABEL MAINTAINERS="student@otus.ru"
 
 ENV BIN_FILE "/opt/previewer/previewer-app"
 COPY --from=build ${BIN_FILE} ${BIN_FILE}
-RUN apk add tree
-RUN tree -L 4 | grep config
-ENV CONFIG_FILE /opt/previewer/previewer-app/config.yaml
+ENV CONFIG_FILE /opt/previewer/config.yaml
 COPY ./configs/config.yaml ${CONFIG_FILE}
 
 CMD ${BIN_FILE} -config ${CONFIG_FILE}
