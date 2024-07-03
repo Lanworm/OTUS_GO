@@ -32,6 +32,6 @@ COPY --from=build ${BIN_FILE} ${BIN_FILE}
 RUN apk add tree
 RUN tree -L 4 | grep previewer
 ENV CONFIG_FILE /opt/previewer/previewer-app/config.yaml
-COPY ./local/config.yaml ${CONFIG_FILE}
+COPY ./configs/config.yaml ${CONFIG_FILE}
 
 CMD ${BIN_FILE} -config ${CONFIG_FILE}

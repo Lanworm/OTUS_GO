@@ -8,7 +8,7 @@ build:
 	go build -v -o $(BIN) -ldflags "$(LDFLAGS)" ./cmd/previewer
 
 run: build
-	$(BIN) -config ./build/local/config.yaml
+	$(BIN) -config ./configs/config.yaml
 
 build-img:
 	docker build \
