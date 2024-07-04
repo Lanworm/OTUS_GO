@@ -1,6 +1,8 @@
 package service
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"errors"
 	"net/url"
 	"strconv"
@@ -17,26 +19,38 @@ var (
 )
 
 func PrepareImgParams(u *url.URL) (imgParams *ImgParams, err error) {
-	v := strings.Split(u.String(), "/")
+	parts := strings.Split(u.String(), "/")
 
-	if len(v) < 4 {
+	if len(parts) < 4 {
 		return nil, ErrInvalidNumberOfArguments
 	}
 
-	width := v[2]
-	height := v[3]
-	urlStr := strings.Join(v[4:], "/")
+	width := parts[2]
+	height := parts[3]
 
-	if !strings.HasPrefix(urlStr, "http://") && !strings.HasPrefix(urlStr, "https://") {
-		urlStr = "http://" + urlStr
+	imageURLParts := parts[4:]
+	imageURL := strings.Join(imageURLParts, "/")
+
+	// Удаляем "https/" из URL, если присутствует
+	imageURL = strings.Replace(imageURL, "https:/", "", -1)
+
+	// Добавляем 'https://' в URL, если отсутствует
+	if !strings.HasPrefix(imageURL, "http://") && !strings.HasPrefix(imageURL, "https://") {
+		imageURL = "https://" + imageURL
 	}
 
-	_, err = url.ParseRequestURI(urlStr)
+	// Удаляем лишний символ '/' в конце URL изображения
+	if strings.HasSuffix(imageURL, "/") {
+		imageURL = imageURL[:len(imageURL)-1]
+	}
+
+	// Проверяем валидность URl
+	_, err = url.ParseRequestURI(imageURL)
 	if err != nil {
 		return nil, ErrInvalidURL
 	}
 
-	params, err := NewImgParams(width, height, urlStr)
+	params, err := NewImgParams(width, height, imageURL)
 	if err != nil {
 		return nil, ErrInvalidFormatOfArguments
 	}
@@ -62,4 +76,9 @@ func NewImgParams(width string, height string, url string) (*ImgParams, error) {
 		return nil, err
 	}
 	return p, nil
+}
+
+func getURLHash(url string) string {
+	hash := md5.Sum([]byte(url))
+	return hex.EncodeToString(hash[:])
 }

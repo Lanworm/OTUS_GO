@@ -13,8 +13,10 @@ import (
 )
 
 type Config struct {
-	Logger LoggerConf
-	Server ServerConf
+	Logger  LoggerConf
+	Server  ServerConf
+	Cache   CacheConf
+	Storage StorageConf
 }
 
 type ServerConf struct {
@@ -36,6 +38,12 @@ func (s *ServerHTTPConf) GetFullAddress() string {
 
 type LoggerConf struct {
 	Level string `validate:"required,oneof=DEBUG INFO WARNING ERROR"`
+}
+type CacheConf struct {
+	Capacity int `validate:"required,gt=1,lte=99"`
+}
+type StorageConf struct {
+	Path string `validate:"required,dirpath"`
 }
 
 func NewConfig(configFile string) (*Config, error) {

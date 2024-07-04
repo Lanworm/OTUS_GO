@@ -4,6 +4,9 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	lrucache "github.com/Lanworm/OTUS_GO/final_project/internal/cache"
+	"github.com/Lanworm/OTUS_GO/final_project/internal/service"
+	"github.com/Lanworm/OTUS_GO/final_project/internal/storage/filestorage"
 	"os"
 	"os/signal"
 	"syscall"
@@ -35,12 +38,14 @@ func main() {
 
 	logg, err := logger.New(configs.Logger.Level, os.Stdout)
 	shortcuts.FatalIfErr(err)
-
+	cache := lrucache.NewCache(configs.Cache.Capacity)
+	storage := filestorage.NewFileStorage(configs.Storage.Path)
+	imgService := service.NewImageService(logg, storage, cache)
 	ctx, cancel := signal.NotifyContext(context.Background(),
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 	defer cancel()
 	httpServer := server.NewHTTPServer(logg, configs.Server.HTTP)
-	handlerHTTP := httphandler.NewHandler(logg)
+	handlerHTTP := httphandler.NewHandler(logg, imgService)
 	httpServer.RegisterRoutes(handlerHTTP)
 	go func() {
 		logg.ServerLog(fmt.Sprintf("http server started on: http://%s", configs.Server.HTTP.GetFullAddress()))

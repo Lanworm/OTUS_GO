@@ -5,3 +5,7 @@ server:
     timeout: 3s
 logger:
   level: DEBUG
+cache:
+  capacity: 10
+storage:
+  path: "./images/"

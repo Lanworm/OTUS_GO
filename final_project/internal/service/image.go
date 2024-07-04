@@ -1,16 +1,33 @@
 package service
 
 import (
+	"fmt"
+	lrucache "github.com/Lanworm/OTUS_GO/final_project/internal/cache"
+	"github.com/Lanworm/OTUS_GO/final_project/internal/logger"
+	"github.com/Lanworm/OTUS_GO/final_project/internal/storage"
+	"github.com/nfnt/resize"
 	"image"
-	"image/jpeg"
 	"io"
 	"net/http"
-	"os"
-	"path/filepath"
-
-	"github.com/google/uuid"
-	"github.com/nfnt/resize"
 )
+
+type ImageService struct {
+	logger  *logger.Logger
+	storage storage.IStorage
+	cache   lrucache.Cache
+}
+
+func NewImageService(
+	logger *logger.Logger,
+	storage storage.IStorage,
+	cache lrucache.Cache,
+) *ImageService {
+	return &ImageService{
+		logger:  logger,
+		storage: storage,
+		cache:   cache,
+	}
+}
 
 type ImgParams struct {
 	Width  uint `validate:"required,gt=0,lte=9999"`
@@ -18,55 +35,49 @@ type ImgParams struct {
 	URL    string
 }
 
-func ResizeImg(imgParams *ImgParams) (img image.Image, err error) {
-	// Директория для сохранения изображений
-	saveDir := "./images/"
+func (s *ImageService) ResizeImg(imgParams *ImgParams) (img image.Image, err error) {
 
-	response, err := http.Get(imgParams.URL)
-	if err != nil {
-		return nil, err
-	}
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
+	imageID := getURLHash(imgParams.URL)
+
+	key, ok := s.cache.Get(lrucache.Key(imageID))
+	if ok {
+		fmt.Println("received from cache: ", key)
+
+		cachedImg, err := s.storage.Get(imageID)
 		if err != nil {
-
+			s.logger.Error(err.Error())
+			return nil, err
 		}
-	}(response.Body)
+		return cachedImg, nil
 
-	img, _, err = image.Decode(response.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	newImg := resize.Resize(imgParams.Width, imgParams.Height, img, resize.Lanczos3)
-	// Генерируем уникальный идентификатор для файла
-	imageID := uuid.New()
-
-	// Полный путь к файлу для сохранения в указанной директории
-	filePath := filepath.Join(saveDir, imageID.String()+"_resized.jpg")
-
-	// Создаем директорию, если она не существует
-	if err := os.MkdirAll(saveDir, os.ModePerm); err != nil {
-		return nil, err
-	}
-
-	// Создаем новый файл с уникальным идентификатором для сохранения измененного изображения
-	outputFile, err := os.Create(filePath)
-	if err != nil {
-		return nil, err
-	}
-	defer func(outputFile *os.File) {
-		err := outputFile.Close()
+	} else {
+		s.cache.Set(lrucache.Key(imageID), imgParams.URL)
+		response, err := http.Get(imgParams.URL)
 		if err != nil {
-
+			return nil, err
 		}
-	}(outputFile)
+		fmt.Println("downloaded from url: ", imgParams.URL)
 
-	// Сохраняем измененное изображение в формате JPEG
-	EncodeErr := jpeg.Encode(outputFile, newImg, nil)
-	if EncodeErr != nil {
-		return nil, EncodeErr
+		defer func(Body io.ReadCloser) {
+			err := Body.Close()
+			if err != nil {
+				s.logger.Error(err.Error())
+				return
+			}
+		}(response.Body)
+
+		sourceImg, _, err := image.Decode(response.Body)
+		if err != nil {
+			return nil, err
+		}
+
+		newImg := resize.Resize(imgParams.Width, imgParams.Height, sourceImg, resize.Lanczos3)
+
+		_, err = s.storage.Set(newImg, imageID)
+		if err != nil {
+			return nil, err
+		}
+
+		return newImg, nil
 	}
-
-	return newImg, nil
 }
