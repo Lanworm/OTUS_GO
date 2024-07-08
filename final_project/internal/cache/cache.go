@@ -1,15 +1,22 @@
 package lrucache
 
+import (
+	"fmt"
+	"image"
+	"os"
+	"path/filepath"
+)
+
 type Key string
 
 type Cache interface {
-	Set(key Key, value interface{}) bool
-	Get(key Key) (interface{}, bool)
+	Set(key Key, value image.Image) bool
+	Get(key Key) (image.Image, bool)
 	Clear()
 }
 
 type CacheListItem struct {
-	value interface{}
+	value image.Image
 	key   Key
 }
 
@@ -27,7 +34,7 @@ func NewCache(capacity int) Cache {
 	}
 }
 
-func (c *lruCache) Set(key Key, value interface{}) bool {
+func (c *lruCache) Set(key Key, value image.Image) bool {
 	cacheListItem, ok := c.items[key]
 
 	if ok {
@@ -56,7 +63,7 @@ func (c *lruCache) Set(key Key, value interface{}) bool {
 	return false
 }
 
-func (c *lruCache) Get(key Key) (interface{}, bool) {
+func (c *lruCache) Get(key Key) (image.Image, bool) {
 	cacheItem, ok := c.items[key]
 
 	if ok {
@@ -72,4 +79,39 @@ func (c *lruCache) Get(key Key) (interface{}, bool) {
 func (c *lruCache) Clear() {
 	c.queue = NewList()
 	c.items = make(map[Key]*ListItem, c.capacity)
+}
+
+func InitCache(folderPath string, cap int, cache Cache) error {
+	file, err := os.Open(folderPath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	fileInfos, err := file.Readdir(-1)
+	if err != nil {
+		return err
+	}
+
+	for i, fileInfo := range fileInfos {
+		if fileInfo.IsDir() && i <= cap {
+			continue
+		}
+		filename := fileInfo.Name()
+		filePath := filepath.Join(folderPath, filename)
+
+		imgFile, err := os.Open(filePath)
+		if err != nil {
+			return err
+		}
+		defer imgFile.Close()
+
+		img, _, err := image.Decode(imgFile)
+		if err != nil {
+			return err
+		}
+		cache.Set(Key(filename), img)
+		fmt.Printf("added to the cache: %s\n", filename)
+	}
+	return nil
 }

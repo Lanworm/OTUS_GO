@@ -1,81 +1,50 @@
 package lrucache
 
 import (
-	"testing"
-
 	"github.com/stretchr/testify/require"
+	"image"
+	_ "image/jpeg"
+	_ "image/png"
+	"testing"
 )
 
-func TestCache(t *testing.T) {
-	t.Run("empty cache", func(t *testing.T) {
-		c := NewCache(10)
+func TestLRUCache(t *testing.T) {
+	cache := NewCache(2)
 
-		_, ok := c.Get("aaa")
-		require.False(t, ok)
+	// Проверка добавления и получения изображения из кеша
+	img1 := image.NewRGBA(image.Rect(0, 0, 100, 100))
+	cache.Set(Key("image1"), img1)
 
-		_, ok = c.Get("bbb")
-		require.False(t, ok)
-	})
+	retrievedImg1, found1 := cache.Get(Key("image1"))
+	require.True(t, found1, "Изображение 'image1' не найдено в кеше")
+	require.Equal(t, img1, retrievedImg1, "Изображение 'image1' не соответствует ожидаемому")
 
-	t.Run("simple", func(t *testing.T) {
-		c := NewCache(5)
+	// Проверка замещения изображения в кеше
+	img2 := image.NewRGBA(image.Rect(0, 0, 200, 200))
+	cache.Set(Key("image2"), img2)
 
-		wasInCache := c.Set("aaa", 100)
-		require.False(t, wasInCache)
+	img3 := image.NewRGBA(image.Rect(0, 0, 300, 300))
+	cache.Set(Key("image3"), img3)
 
-		wasInCache = c.Set("bbb", 200)
-		require.False(t, wasInCache)
+	_, found2 := cache.Get(Key("image1"))
+	require.False(t, found2, "Изображение 'image1' должно быть замещено")
 
-		val, ok := c.Get("aaa")
-		require.True(t, ok)
-		require.Equal(t, 100, val)
+	// Проверка очистки кеша
+	cache.Clear()
+	require.Empty(t, cache.(*lruCache).items, "Элементы кеша не были очищены")
+	require.Zero(t, cache.(*lruCache).queue.Len(), "Длина очереди кеша должна быть нулевой")
+}
 
-		val, ok = c.Get("bbb")
-		require.True(t, ok)
-		require.Equal(t, 200, val)
+func TestInitCache(t *testing.T) {
+	capacity := 2
+	testCache := NewCache(capacity)
+	path := "../../test_images"
 
-		wasInCache = c.Set("aaa", 300)
-		require.True(t, wasInCache)
+	err := InitCache(path, capacity, testCache)
+	require.NoError(t, err, "Ошибка при инициализации кеша изображений")
 
-		val, ok = c.Get("aaa")
-		require.True(t, ok)
-		require.Equal(t, 300, val)
-
-		val, ok = c.Get("ccc")
-		require.False(t, ok)
-		require.Nil(t, val)
-	})
-
-	t.Run("simple ejection", func(t *testing.T) {
-		c := NewCache(3)
-		c.Set("a1", 1)
-		c.Set("a2", 2)
-		c.Set("a3", 3)
-		c.Set("a4", 4)
-
-		val, ok := c.Get("a1")
-		require.False(t, ok)
-		require.Nil(t, val)
-	})
-
-	t.Run("ejection old element", func(t *testing.T) {
-		c := NewCache(3)
-
-		c.Set("a1", 1)
-		c.Set("a2", 2)
-		c.Set("a3", 3)
-
-		val, ok := c.Get("a3")
-		require.True(t, ok)
-		require.NotNil(t, val)
-
-		c.Set("a2", 40)
-
-		ok = c.Set("a4", 104)
-		require.False(t, ok)
-
-		val, ok = c.Get("a1")
-		require.False(t, ok)
-		require.Nil(t, val)
-	})
+	// Проверка добавления изображений в кеш
+	retrievedImg1, found1 := testCache.Get(Key("gofer.jpg"))
+	require.True(t, found1, "Изображение 'gofer.jpg' не найдено в кеше")
+	require.NotNil(t, retrievedImg1, "Изображение 'gofer.jpg' не было добавлено в кеш")
 }

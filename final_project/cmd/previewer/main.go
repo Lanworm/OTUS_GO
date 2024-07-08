@@ -39,6 +39,7 @@ func main() {
 	logg, err := logger.New(configs.Logger.Level, os.Stdout)
 	shortcuts.FatalIfErr(err)
 	cache := lrucache.NewCache(configs.Cache.Capacity)
+	lrucache.InitCache(configs.Storage.Path, configs.Cache.Capacity, cache)
 	storage := filestorage.NewFileStorage(configs.Storage.Path)
 	imgService := service.NewImageService(logg, storage, cache)
 	ctx, cancel := signal.NotifyContext(context.Background(),

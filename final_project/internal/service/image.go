@@ -39,19 +39,11 @@ func (s *ImageService) ResizeImg(imgParams *ImgParams) (img image.Image, err err
 
 	imageID := getURLHash(imgParams.URL)
 
-	key, ok := s.cache.Get(lrucache.Key(imageID))
+	cachedImg, ok := s.cache.Get(lrucache.Key(imageID))
 	if ok {
-		fmt.Println("received from cache: ", key)
-
-		cachedImg, err := s.storage.Get(imageID)
-		if err != nil {
-			s.logger.Error(err.Error())
-			return nil, err
-		}
+		fmt.Println("received from cache: ", imageID)
 		return cachedImg, nil
-
 	} else {
-		s.cache.Set(lrucache.Key(imageID), imgParams.URL)
 		response, err := http.Get(imgParams.URL)
 		if err != nil {
 			return nil, err
@@ -70,7 +62,7 @@ func (s *ImageService) ResizeImg(imgParams *ImgParams) (img image.Image, err err
 		if err != nil {
 			return nil, err
 		}
-
+		s.cache.Set(lrucache.Key(imageID), sourceImg)
 		newImg := resize.Resize(imgParams.Width, imgParams.Height, sourceImg, resize.Lanczos3)
 
 		_, err = s.storage.Set(newImg, imageID)

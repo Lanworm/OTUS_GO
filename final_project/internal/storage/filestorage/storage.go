@@ -7,8 +7,6 @@ import (
 	"path/filepath"
 )
 
-var postfix = "_resized.jpg"
-
 type FileStorage struct {
 	storagePath string
 }
@@ -19,7 +17,7 @@ func (f FileStorage) Set(item image.Image, id string) (bool, error) {
 		return false, err
 	}
 
-	outputFile, cfErr := os.Create(filepath.Join(f.storagePath, id+postfix))
+	outputFile, cfErr := os.Create(filepath.Join(f.storagePath, id))
 	if cfErr != nil {
 		return false, cfErr
 	}
@@ -34,7 +32,7 @@ func (f FileStorage) Set(item image.Image, id string) (bool, error) {
 
 func (f FileStorage) Get(id string) (image.Image, error) {
 
-	file, err := os.Open(filepath.Join(f.storagePath, id+postfix))
+	file, err := os.Open(filepath.Join(f.storagePath, id))
 	if err != nil {
 		return nil, err
 	}
