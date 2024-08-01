@@ -15,12 +15,3 @@ services:
     ports:
       - "15672:15672"
       - "5672:5672"
-  init-rabbitmq:
-    image: alpine:3.20.1
-    depends_on:
-      - calendar-rabbitmq
-    volumes:
-      - ./../rabbitmq/custom-definitions.json:/etc/rabbitmq/custom-definitions.json
-    entrypoint: [ '/bin/sh', '-c' ]
-    command:
-      - "apk add curl && curl -u guest:guest --header \"Content-Type: application/json\" -X POST -T /etc/rabbitmq/custom-definitions.json http://calendar-rabbitmq:15672/api/definitions"

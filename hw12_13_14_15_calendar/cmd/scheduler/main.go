@@ -64,6 +64,7 @@ func main() {
 	}
 
 	logg.Info(fmt.Sprintf("dropped old items coutnt: %d", dropCount))
+	logg.Info(config.Rabbit.Dsn)
 	rc, err := amqp.Dial(config.Rabbit.Dsn)
 	shortcuts.FatalIfErr(err)
 

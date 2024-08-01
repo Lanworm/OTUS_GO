@@ -1,6 +1,6 @@
 logger:
   level: DEBUG
-interval: 1m
+interval: 3m
 rabbit:
   dsn: "amqp://guest:guest@localhost:5672"
   producer:
