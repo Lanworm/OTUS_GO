@@ -99,3 +99,22 @@ func (e *Event) ListEvent(r enum.RangeDuration) ([]storage.Event, error) {
 
 	return nil, fmt.Errorf("unknown range duration: %s", r)
 }
+
+func (e *Event) GetEventRemind(now time.Time) ([]storage.Event, error) {
+	now = time.Date(
+		now.Year(),
+		now.Month(),
+		now.Day(),
+		now.Hour(),
+		now.Minute(),
+		0,
+		0,
+		now.Location(),
+	)
+
+	return e.storage.GetEventRemind(now)
+}
+
+func (e *Event) DropOldEvents(year int) (int64, error) {
+	return e.storage.DropOldEvents(year)
+}

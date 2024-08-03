@@ -5,12 +5,14 @@ import (
 	"fmt"
 
 	"github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/config"
+	"github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/logger"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type DB struct {
-	conf *config.DatabaseConf
-	pg   *pgxpool.Pool
+	conf   *config.DatabaseConf
+	logger *logger.Logger
+	pg     *pgxpool.Pool
 }
 
 type IDatabase interface {
@@ -19,9 +21,13 @@ type IDatabase interface {
 	DB() *pgxpool.Pool
 }
 
-func New(conf *config.DatabaseConf) *DB {
+func New(
+	conf *config.DatabaseConf,
+	logger *logger.Logger,
+) *DB {
 	return &DB{
-		conf: conf,
+		conf:   conf,
+		logger: logger,
 	}
 }
 

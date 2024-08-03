@@ -96,3 +96,26 @@ func (s *Storage) ListRange(start, end *time.Time) ([]storage.Event, error) {
 
 	return result, nil
 }
+
+func (s *Storage) GetEventRemind(now time.Time) ([]storage.Event, error) {
+	start := now
+	end := now.Add(time.Minute)
+
+	return s.ListRange(&start, &end)
+}
+
+func (s *Storage) DropOldEvents(year int) (int64, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	dropCount := int64(0)
+
+	for k, item := range s.data {
+		if year > item.StartDatetime.Year() {
+			delete(s.data, k)
+			dropCount++
+		}
+	}
+
+	return dropCount, nil
+}

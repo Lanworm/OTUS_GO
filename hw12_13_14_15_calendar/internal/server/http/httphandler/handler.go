@@ -115,7 +115,6 @@ func (h *Handler) UpdateEvent(
 		Description:   updateReq.Description,
 		RemindBefore:  updateReq.RemindBefore,
 	})
-
 	if err != nil {
 		writeError(http.StatusInternalServerError, w, err.Error())
 		return

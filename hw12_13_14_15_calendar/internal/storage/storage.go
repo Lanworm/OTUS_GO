@@ -10,4 +10,6 @@ type IStorage interface {
 	Delete(id string) error
 	FindItem(id string) (*Event, error)
 	ListRange(start, end *time.Time) ([]Event, error)
+	GetEventRemind(now time.Time) ([]Event, error)
+	DropOldEvents(year int) (int64, error)
 }

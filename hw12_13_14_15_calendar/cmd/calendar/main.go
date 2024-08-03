@@ -9,16 +9,18 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/app"
-	"github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/config"
+	config2 "github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/config"
 	"github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/logger"
 	internalgrpc "github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/server/grpc"
 	"github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/server/grpc/grpchandler"
 	internalhttp "github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/server/http"
 	"github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/server/http/httphandler"
 	"github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/service"
+	"github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/storage"
+	"github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/storage/database"
+	memorystorage "github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/storage/memory"
+	sqlstorage "github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/storage/sql"
 	"github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/pkg/shortcuts"
-	"github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/pkg/storageconf"
 )
 
 var configFile string
@@ -37,15 +39,25 @@ func main() {
 
 	ctx := context.Background()
 
-	config, err := config.NewConfig(configFile)
+	config, err := config2.NewConfig(configFile)
 	shortcuts.FatalIfErr(err)
 
 	logg, err := logger.New(config.Logger.Level, os.Stdout)
 	shortcuts.FatalIfErr(err)
 
-	eventStorage, _ := storageconf.NewStorage(ctx, *config, logg)
+	var eventStorage storage.IStorage
+	if config.Storage.InDatabase() {
+		db := database.New(
+			&config.Database,
+			logg,
+		)
+		err := db.Connect(ctx)
+		shortcuts.FatalIfErr(err)
 
-	_ = app.New(logg, eventStorage)
+		eventStorage = sqlstorage.NewEventStorage(db, logg)
+	} else {
+		eventStorage = memorystorage.New()
+	}
 
 	ctx, cancel := signal.NotifyContext(context.Background(),
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
