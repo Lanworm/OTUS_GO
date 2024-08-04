@@ -31,7 +31,10 @@ install-lint-deps:
 	(which golangci-lint > /dev/null) || curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(shell go env GOPATH)/bin v1.55.2
 
 deps-up:
-	COMPOSE_PROJECT_NAME="calendar" docker compose -f ./build/local/docker-compose.yml up -d --build
+	COMPOSE_PROJECT_NAME="calendar" docker compose -f ./build/local/docker-compose.yaml up -d --build
+
+deps-down:
+	COMPOSE_PROJECT_NAME="calendar" docker compose -f ./build/local/docker-compose.yaml down
 
 migrate-create:
 	if [[ -z "$(NAME)" ]]; then \
@@ -53,4 +56,13 @@ lint: install-lint-deps
 generate:
 	protoc ./docs/protobuf/calendar.proto --go_out=. --go-grpc_out=.
 
-.PHONY: build run build-img run-img version test lint proto
+up:
+	COMPOSE_PROJECT_NAME="calendar" docker compose -f ./deployments/docker-compose.yaml up -d --build
+
+down:
+	COMPOSE_PROJECT_NAME="calendar" docker compose -f ./deployments/docker-compose.yaml down
+
+integration-tests:
+	COMPOSE_PROJECT_NAME="calendar" docker compose -f ./deployments/docker-compose.yaml up --exit-code-from integra-tests integra-tests --build
+
+.PHONY: build run build-img run-img version test lint proto integration-tests migrate-up migrate-down up down generat

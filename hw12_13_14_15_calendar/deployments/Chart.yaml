@@ -1,0 +1,26 @@
+apiVersion: v2
+name: calendar
+description: A Helm chart for Kubernetes to deploy the Calendar application
+type: application
+version: 1.0.0
+appVersion: 1.0.0
+
+maintainers:
+  - name: Pavel Sidorov
+    email: p.g.sidorov.dev@gmail.com
+
+sources:
+  - https://github.com/Lanworm/OTUS_GO/tree/master/hw12_13_14_15_calendar
+
+keywords:
+  - calendar
+  - sender
+  - scheduling
+
+dependencies:
+  - name: postgresql
+    version: "9.8.1"
+    repository: "https://github.com/bitnami/charts"
+  - name: rabbitmq
+    version: "7.6.1"
+    repository: "https://github.com/bitnami/charts"

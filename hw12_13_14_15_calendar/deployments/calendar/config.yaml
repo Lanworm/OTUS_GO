@@ -1,10 +1,10 @@
 server:
   http:
-    host: localhost
+    host: 0.0.0.0
     port: 8090
     timeout: 3s
   grpc:
-    host: localhost
+    host: 0.0.0.0
     port: 50051
     timeout: 3s
 logger:
@@ -12,7 +12,7 @@ logger:
 storage:
   place: database
 database:
-  host: localhost
+  host: calendar-postgres
   user: postgres
   password: postgres
   database: postgres

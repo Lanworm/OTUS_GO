@@ -9,7 +9,7 @@ import (
 	"syscall"
 	"time"
 
-	config2 "github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/config"
+	"github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/config"
 	"github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/logger"
 	"github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/service"
 	"github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/service/rabbitmq"
@@ -28,7 +28,7 @@ func init() {
 func main() {
 	flag.Parse()
 
-	config, err := config2.NewSchedulerConfig(configFile)
+	config, err := config.NewSchedulerConfig(configFile)
 	shortcuts.FatalIfErr(err)
 
 	logg, err := logger.New(config.Logger.Level, os.Stdout)
@@ -80,32 +80,6 @@ func main() {
 
 	ticker := time.NewTicker(duration)
 	logg.Info(fmt.Sprintf("scheduler starterd with duration: %s", config.Interval))
-forloop:
-	for {
-		select {
-		case <-ticker.C:
-			events, err := evtService.GetEventRemind(time.Now())
-			if err != nil {
-				logg.Error(fmt.Errorf("load event for remid: %w", err))
-				continue
-			}
 
-			if len(events) > 0 {
-				for _, event := range events {
-					logg.Info(fmt.Sprintf("process event: %s", event.ID))
-				}
-				err := rabbit.PublishMessages(events)
-				if err != nil {
-					logg.Error(err)
-					cancel()
-					break forloop
-				}
-			} else {
-				logg.Info("no messages for send")
-			}
-		case <-ctx.Done():
-			logg.Info("context cancelled")
-			break forloop
-		}
-	}
+	ProcessEvents(ctx, ticker, evtService, logg, rabbit, cancel)
 }

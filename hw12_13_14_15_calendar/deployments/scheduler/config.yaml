@@ -1,0 +1,25 @@
+logger:
+  level: DEBUG
+interval: 1m
+rabbit:
+  dsn: "amqp://guest:guest@calendar-rabbitmq:5672"
+  producer:
+    queue:
+      name: notification
+      durable: true
+    exchange:
+      name: notification
+      type: fanout
+      durable: true
+    routingKey: ""
+  consumer:
+    queue: notification
+    consumer: calendar-consumer
+    autoAck: false
+    exclusive: false
+database:
+  host: calendar-postgres
+  user: postgres
+  password: postgres
+  database: postgres
+  port: 5432

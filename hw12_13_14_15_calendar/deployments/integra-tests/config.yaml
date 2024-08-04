@@ -1,0 +1,13 @@
+server:
+  http:
+    host: 0.0.0.0
+    port: 8090
+    timeout: 3s
+  grpc:
+    host: 0.0.0.0
+    port: 50051
+    timeout: 3s
+logger:
+  level: DEBUG
+storage:
+  place: memory

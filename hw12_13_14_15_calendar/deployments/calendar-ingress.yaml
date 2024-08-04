@@ -1,0 +1,29 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: calendar-ingress
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: calendar-api-service
+                port:
+                  number: 80
+          - path: /scheduler
+            pathType: Prefix
+            backend:
+              service:
+                name: calendar-scheduler-service
+                port:
+                  number: 80
+          - path: /sender
+            pathType: Prefix
+            backend:
+              service:
+                name: calendar-sender-service
+                port:
+                  number: 80

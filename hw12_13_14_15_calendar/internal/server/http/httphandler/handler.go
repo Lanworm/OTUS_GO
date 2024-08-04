@@ -195,3 +195,17 @@ func writeError(
 		w.Write(js)
 	}
 }
+
+func (h *Handler) Health(
+	w http.ResponseWriter,
+	_ *http.Request,
+) {
+	w.WriteHeader(http.StatusOK)
+}
+
+func (h *Handler) Ready(
+	w http.ResponseWriter,
+	_ *http.Request,
+) {
+	w.WriteHeader(http.StatusOK)
+}

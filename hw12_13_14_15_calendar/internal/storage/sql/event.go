@@ -267,7 +267,7 @@ func (s *EventStorage) GetEventRemind(now time.Time) ([]storage.Event, error) {
 }
 
 func (s *EventStorage) DropOldEvents(year int) (dropCount int64, err error) {
-	query := `delete from c_event where $1 > date_part('year', start_datetime)`
+	query := `delete from c_event where $1 > date_part('year', start_datetime) AND end_datetime < now();`
 
 	res, err := s.db.DB().Query(
 		context.Background(),

@@ -12,4 +12,7 @@ func (s *Server) RegisterRoutes(handler *httphandler.Handler) {
 	s.AddRoute("/event/update", ContentType(baseContentType, Method("PUT", handler.UpdateEvent)))
 	s.AddRoute("/event/delete", ContentType(baseContentType, Method("DELETE", handler.DeleteEvent)))
 	s.AddRoute("/event/list", ContentType(baseContentType, Method("GET", handler.ListEvent)))
+
+	s.AddRoute("/ready", ContentType(baseContentType, Method("GET", handler.Ready)))
+	s.AddRoute("/health", ContentType(baseContentType, Method("GET", handler.Health)))
 }
