@@ -1,0 +1,1 @@
+drop table c_send

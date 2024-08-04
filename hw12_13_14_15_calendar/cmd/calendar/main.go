@@ -9,18 +9,16 @@ import (
 	"syscall"
 	"time"
 
-	config2 "github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/config"
+	"github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/app"
+	"github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/config"
 	"github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/logger"
 	internalgrpc "github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/server/grpc"
 	"github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/server/grpc/grpchandler"
 	internalhttp "github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/server/http"
 	"github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/server/http/httphandler"
 	"github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/service"
-	"github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/storage"
-	"github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/storage/database"
-	memorystorage "github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/storage/memory"
-	sqlstorage "github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/internal/storage/sql"
 	"github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/pkg/shortcuts"
+	"github.com/Lanworm/OTUS_GO/hw12_13_14_15_calendar/pkg/storageconf"
 )
 
 var configFile string
@@ -39,37 +37,27 @@ func main() {
 
 	ctx := context.Background()
 
-	config, err := config2.NewConfig(configFile)
+	appConfig, err := config.NewConfig(configFile)
 	shortcuts.FatalIfErr(err)
 
-	logg, err := logger.New(config.Logger.Level, os.Stdout)
+	logg, err := logger.New(appConfig.Logger.Level, os.Stdout)
 	shortcuts.FatalIfErr(err)
 
-	var eventStorage storage.IStorage
-	if config.Storage.InDatabase() {
-		db := database.New(
-			&config.Database,
-			logg,
-		)
-		err := db.Connect(ctx)
-		shortcuts.FatalIfErr(err)
+	eventStorage, _ := storageconf.NewStorage(ctx, *appConfig, logg)
 
-		eventStorage = sqlstorage.NewEventStorage(db, logg)
-	} else {
-		eventStorage = memorystorage.New()
-	}
+	_ = app.New(logg, eventStorage)
 
 	ctx, cancel := signal.NotifyContext(context.Background(),
 		syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 	defer cancel()
 
-	httpServer := internalhttp.NewHTTPServer(logg, config.Server.HTTP)
+	httpServer := internalhttp.NewHTTPServer(logg, appConfig.Server.HTTP)
 	evtService := service.NewEventService(logg, eventStorage)
 
 	handlerHTTP := httphandler.NewHandler(logg, evtService)
 	httpServer.RegisterRoutes(handlerHTTP)
 	go func() {
-		logg.ServerLog(fmt.Sprintf("http server started on: %s", config.Server.HTTP.GetFullAddress()))
+		logg.ServerLog(fmt.Sprintf("http server started on: %s", appConfig.Server.HTTP.GetFullAddress()))
 		if err := httpServer.Start(ctx); err != nil {
 			logg.Error("failed to start http server: " + err.Error())
 			cancel()
@@ -81,10 +69,10 @@ func main() {
 	grpcServer := internalgrpc.NewRPCServer(
 		handlerGrpc,
 		logg,
-		config.Server.GRPC,
+		appConfig.Server.GRPC,
 	)
 	go func() {
-		logg.ServerLog(fmt.Sprintf("grpc server started on: %s", config.Server.GRPC.GetFullAddress()))
+		logg.ServerLog(fmt.Sprintf("grpc server started on: %s", appConfig.Server.GRPC.GetFullAddress()))
 		if err := grpcServer.Start(ctx); err != nil {
 			logg.Error("failed to start grpc server: " + err.Error())
 			cancel()

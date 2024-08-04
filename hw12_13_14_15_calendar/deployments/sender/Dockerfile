@@ -1,8 +1,8 @@
 # Собираем в гошке
 FROM golang:1.19 AS build
 
-ENV BIN_FILE=/opt/calendar/calendar-app
-ENV CODE_DIR=/go/src/
+ENV BIN_FILE /opt/sender/sender-app
+ENV CODE_DIR /go/src/
 
 WORKDIR ${CODE_DIR}
 
@@ -18,19 +18,19 @@ COPY . ${CODE_DIR}
 ARG LDFLAGS
 RUN CGO_ENABLED=0 go build \
         -ldflags "$LDFLAGS" \
-        -o ${BIN_FILE} cmd/calendar/*
+        -o ${BIN_FILE} cmd/sender/*
 
 # На выходе тонкий образ
 FROM alpine:3.9
 
 LABEL ORGANIZATION="OTUS Online Education"
-LABEL SERVICE="calendar"
+LABEL SERVICE="sender"
 LABEL MAINTAINERS="student@otus.ru"
 
-ENV BIN_FILE="/opt/calendar/calendar-app"
+ENV BIN_FILE "/opt/sender/sender-app"
 COPY --from=build ${BIN_FILE} ${BIN_FILE}
 
-ENV CONFIG_FILE=/etc/calendar/config.yaml
-COPY build/local/config.yaml ${CONFIG_FILE}
+ENV CONFIG_FILE /etc/sender/config.yaml
+COPY deployments/sender/config.yaml ${CONFIG_FILE}
 
 CMD ${BIN_FILE} -config ${CONFIG_FILE}

@@ -1,1 +1,61 @@
-version: "3"
+services:
+  calendar-app:
+    container_name: calendar-app
+    build:
+      dockerfile: deployments/calendar/Dockerfile
+      context: ../
+    restart: "on-failure"
+    depends_on:
+      - calendar-postgres
+    ports:
+      - "50051:50051"
+      - "8090:8090"
+  calendar-postgres:
+    container_name: calendar-postgres
+    image: "postgres"
+    restart: "no"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+  calendar-rabbitmq:
+    container_name: calendar-rabbitmq
+    image: "rabbitmq:3.10.7-management"
+    restart: "no"
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+  calendar-scheduler:
+    container_name: calendar-scheduler
+    build:
+      dockerfile: deployments/scheduler/Dockerfile
+      context: ../
+    restart: "on-failure"
+    depends_on:
+      - calendar-rabbitmq
+      - calendar-postgres
+  calendar-sender:
+    container_name: calendar-sender
+    build:
+      dockerfile: deployments/sender/Dockerfile
+      context: ../
+    depends_on:
+      - calendar-rabbitmq
+      - calendar-postgres
+    restart: "on-failure"
+  calendar-migrate:
+    container_name: calendar-migrate
+    build:
+      context: ../
+      dockerfile: deployments/migrations/Dockerfile
+    depends_on:
+      - calendar-postgres
+    restart: on-failure
+  integra-tests:
+    container_name: calendar-integra-tests
+    build:
+      context: ../
+      dockerfile: deployments/integra-tests/Dockerfile
+    restart: no
